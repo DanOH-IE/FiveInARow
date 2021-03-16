@@ -1,0 +1,11 @@
+server:
+  port : 8081
+
+fiveInARow:
+  host: localhost
+  port: 8080
+
+game:
+  numColumns: 9
+  numRows: 6
+  winningNum: 5

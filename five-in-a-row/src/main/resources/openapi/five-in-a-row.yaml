@@ -1,0 +1,249 @@
+openapi: "3.0.2"
+info:
+  title: Five in a Row API
+  description: This an API for clients to integrate with a Five in a Row game
+  version: 1.0.0
+servers:
+  - url: '{protocol}://{server}:{port}/{basePath}'
+    description: Open API
+    variables:
+      protocol:
+        enum:
+          - 'http'
+          - 'https'
+        default: 'http'
+      server:
+        default: 'five-in-a-row'
+      port:
+        enum:
+          - '80'
+          - '443'
+        default: '80'
+      basePath:
+        default: 'api/fiveInARow'
+paths:
+  "/v1/game/join":
+    post:
+      tags:
+        - join
+      summary: Join a new game
+      description: Request to join a new game.
+      operationId: "joinGame"
+      requestBody:
+        $ref: "#/components/requestBodies/JoinRequest"
+      responses:
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JoinResponse"
+        "400":
+          description: Bad Request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameError"
+        "500":
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameError"
+  "/v1/game/move/{gameId}":
+    post:
+      tags:
+        - move
+      summary: Join a new game
+      description: Request to join a new game.
+      operationId: "move"
+      requestBody:
+        $ref: "#/components/requestBodies/MoveRequest"
+      parameters:
+        - name: gameId
+          in: path
+          description: The unique identifier for the game
+          required: true
+          schema:
+            type: string
+            example: abcd-efgh-ijkl-mnop
+      responses:
+        "202":
+          description: Accepted
+        "400":
+          description: Bad Request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameError"
+        "500":
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameError"
+  /v1/game/update/{gameId}:
+    get:
+      tags:
+        - update
+      summary: get the latest game updates
+      description: Request to join a new game.
+      operationId: "update"
+      parameters:
+        - name: gameId
+          in: path
+          description: The unique identifier for the game
+          required: true
+          schema:
+            type: string
+            example: abcd-efgh-ijkl-mnop
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameUpdate'
+        "400":
+          description: Bad Request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameError"
+        "500":
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameError"
+
+security:
+  - { }
+  - BearerAuth: [ ]
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: This API uses Bearer Token Authorization Flow.
+      bearerFormat: JWT
+  requestBodies:
+    JoinRequest:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/JoinRequest"
+    MoveRequest:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/MoveRequest"
+  schemas:
+    JoinRequest:
+      type: object
+      description: The Join Request request body.
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: The displaydisplayName of the player
+          example: Daniel
+    JoinResponse:
+      type: object
+      description: The response of a join game request.
+      required:
+        - displayName
+        - gameId
+        - playerId
+        - colour
+      properties:
+        displayName:
+          type: string
+          description: The name of the player
+          example: Daniel
+        gameId:
+          type: string
+          description: The unique identifier for the game
+          example: abcd-efgh-ijkl-mnop
+        playerId:
+          type: string
+          description: The unique identifier for the player
+          example: abcd-efgh-ijkl-mnop
+        colour:
+          $ref: "#/components/schemas/Colour"
+    MoveRequest:
+      type: object
+      description: The a move request body.
+      required:
+        - playerId
+        - column
+      properties:
+        playerId:
+          type: string
+          description: The unique identifier for the player
+          example: abcd-efgh-ijkl-mnop
+        column:
+          type: integer
+          description: The column the player has chosen
+          format: int32
+          example: 0
+    GameUpdate:
+      type: object
+      description: a response with the latest version of the game.
+      required:
+        - gameId
+        - currentPlayerId
+        - winningPlayerId
+        - gameStatus
+        - gameBoard
+      properties:
+        gameId:
+          type: string
+          description: The unique identifier for the game
+          example: abcd-efgh-ijkl-mnop
+        currentPlayerId:
+          type: string
+          description: The unique identifier for the player whose move it is currently
+          example: abcd-efgh-ijkl-mnop
+        winningPlayerId:
+          type: string
+          description: The identifier for the winning player
+          example: abcd-efgh-ijkl-mnop
+        gameboard:
+          $ref: "#/components/schemas/GameBoard"
+        gameStatus:
+          $ref: "#/components/schemas/GameStatus"
+    Colour:
+      type: string
+      enum:
+        - RED
+        - BLUE
+        - GREY
+    GameBoard:
+      type: array
+      items:
+        type: array
+        items:
+          $ref: "#/components/schemas/Colour"
+    GameStatus:
+      type: string
+      enum:
+        - NOT_STARTED
+        - WAITING_FOR_PLAYER_TO_JOIN
+        - STARTED
+        - GAME_OVER
+    GameError:
+      type: object
+      required:
+        - errorMessage
+        - errorCode
+      properties:
+        errorMessage:
+          type: string
+          description: A description of the error
+          example: Not your turn
+        errorCode:
+          type: string
+          description: An error code
+          example: 1001
